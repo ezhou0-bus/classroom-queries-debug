@@ -1,23 +1,19 @@
 class DepartmentsController < ApplicationController
   def index
     @departments = Department.all.order({ :created_at => :desc })
-
     render({ :template => "departments/index" })
   end
 
   def show
     the_id = params.fetch("path_id")
-    @department = Department.where({:id => the_id })
-
+    @department = Department.find_by({ :id => the_id })
     render({ :template => "departments/show" })
   end
 
   def create
-    @department = Department.new
-    @department.name = params.fetch("query_name")
+    @department = Department.new(department_params)
 
-    if @department.valid?
-      @department.save
+    if @department.save
       redirect_to("/departments", { :notice => "Department created successfully." })
     else
       redirect_to("/departments", { :notice => "Department failed to create successfully." })
@@ -26,13 +22,10 @@ class DepartmentsController < ApplicationController
 
   def update
     the_id = params.fetch("path_id")
-    @department = Department.where({ :id => the_id }).at(0)
+    @department = Department.find_by({ :id => the_id })
 
-    @department.name = params.fetch("query_name")
-
-    if @department.valid?
-      @department.save
-      redirect_to("/departments/#{@department.id}", { :notice => "Department updated successfully."} )
+    if @department.update(department_params)
+      redirect_to("/departments/#{@department.id}", { :notice => "Department updated successfully." })
     else
       redirect_to("/departments/#{@department.id}", { :alert => "Department failed to update successfully." })
     end
@@ -40,10 +33,15 @@ class DepartmentsController < ApplicationController
 
   def destroy
     the_id = params.fetch("path_id")
-    @department = Department.where({ :id => the_id }).at(0)
+    @department = Department.find_by({ :id => the_id })
 
     @department.destroy
+    redirect_to("/departments", { :notice => "Department deleted successfully." })
+  end
 
-    redirect_to("/departments", { :notice => "Department deleted successfully."} )
+  private
+
+  def department_params
+    params.require(:department).permit(:name)
   end
 end
